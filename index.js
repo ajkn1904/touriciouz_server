@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 
@@ -33,6 +33,14 @@ async function run(){
         app.get('/packages', async (req, res) => {
             const query = {}
             const result = await packagesCollection.find(query).toArray()
+            res.send(result)
+        })
+
+
+        app.get('/packages/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await packagesCollection.findOne(filter);
             res.send(result)
         })
 
