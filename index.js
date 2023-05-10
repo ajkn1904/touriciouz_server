@@ -39,7 +39,7 @@ async function run(){
 
         app.get('/packages/:id', async (req, res) => {
             const id = req.params.id;
-            const filter = { _id: ObjectId(id) };
+            const filter = { _id: new ObjectId(id) };
             const result = await packagesCollection.findOne(filter);
             res.send(result)
         })
