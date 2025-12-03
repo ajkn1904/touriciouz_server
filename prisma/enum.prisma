@@ -1,0 +1,7 @@
+enum UserRole {
+  ADMIN
+  GUIDE
+  TOURIST
+}
+
+
