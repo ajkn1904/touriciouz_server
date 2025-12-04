@@ -47,6 +47,10 @@ export const credentialsLogin = catchAsync(
       return next(new AppError(StatusCodes.NOT_FOUND, "User not found"));
     }
 
+    if(user.status === "DELETED"){
+      return next(new AppError(StatusCodes.NOT_FOUND, "User is blocked!"));
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return next(new AppError(StatusCodes.UNAUTHORIZED, "Invalid password"));
