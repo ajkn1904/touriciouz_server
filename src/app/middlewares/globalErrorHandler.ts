@@ -10,7 +10,7 @@ const globalErrorHandler = (
   console.log(err);
 
   let statusCode = httpStatus.INTERNAL_SERVER_ERROR;
-  let message = "Something went wrong!";
+  let message = err.message || "Something went wrong!";
   let error = err;
 
   

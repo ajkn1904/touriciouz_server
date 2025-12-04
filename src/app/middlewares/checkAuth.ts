@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import AppError from "../errorHelper/AppError";
+import AppError from "../errors/AppError";
 import { StatusCodes } from "http-status-codes";
 import { verifyToken } from "../utils/jwt";
+import { prisma } from "../utils/prisma";
 import { JwtPayload } from "jsonwebtoken";
-import { envVars } from "../../config/env";
-import { prisma } from "../../config/db";
+import config from "../../config";
+
 
 export const checkAuth =
   (...authRoles: string[]) =>
@@ -22,7 +23,7 @@ export const checkAuth =
 
       const verifiedToken = verifyToken(
         accessToken,
-        envVars.JWT_ACCESS_SECRET
+        config.jwt.jwt_secret as string
       ) as JwtPayload;
 
       const isUserExists = await prisma.user.findUnique({
