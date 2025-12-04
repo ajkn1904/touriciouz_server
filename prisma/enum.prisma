@@ -4,4 +4,35 @@ enum UserRole {
   TOURIST
 }
 
+enum UserStatus {
+    ACTIVE
+    INACTIVE
+    DELETED
+}
 
+
+enum TourCategory {
+  HISTORY
+  FOOD
+  NIGHTLIFE
+  SHOPPING
+  ADVENTURE
+  CULTURE
+  ART
+  NATURE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  CANCELLED
+  REFUNDED
+  FAILED
+}

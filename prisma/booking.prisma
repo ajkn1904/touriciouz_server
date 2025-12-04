@@ -1,0 +1,18 @@
+model Booking {
+  id          String     @id @default(uuid())
+  touristId   String
+  guideId     String
+  tourId      String
+
+  tourist     Tourist    @relation(fields: [touristId], references: [id])
+  guide       Guide      @relation(fields: [guideId], references: [id])
+  tour        Tour       @relation(fields: [tourId], references: [id])
+
+  date        DateTime
+  status      BookingStatus @default(PENDING)
+
+  payment     Payment?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -1,0 +1,60 @@
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  password     String
+  profilePic   String?
+  bio          String?
+  languages    String[]  
+
+  role         UserRole   @default(TOURIST)
+  status       UserStatus @default(ACTIVE)
+  
+  // Role relationships
+  admin        Admin?
+  guide        Guide?
+  tourist      Tourist?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+
+// ADMIN
+model Admin {
+  id      String @id @default(uuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id])
+}
+
+// GUIDE
+model Guide {
+  id          String         @id @default(uuid())
+  userId      String         @unique
+  user        User           @relation(fields: [userId], references: [id])
+
+  expertise   TourCategory[] 
+  dailyRate   Float
+  rating      Float          @default(0.0)
+  totalTours  Int            @default(0)
+
+  listings    Tour[]
+  bookings    Booking[]
+  reviews Review[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// TOURIST
+model Tourist {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id])
+
+  trips          Booking[]
+  reviews Review[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
