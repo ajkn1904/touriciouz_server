@@ -6,6 +6,8 @@ import sendResponse from "../../utils/sendResponse";
 import { TourService } from "./tour.service";
 import { parseBody } from "../../helpers/parseBody";
 import { extractImages } from "../../helpers/extractImages";
+import pick from "../../helpers/pick";
+import { tourSearchableFields } from "./tour.constant";
 
 
 
@@ -62,8 +64,11 @@ const deleteTour = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllTours = catchAsync(async (req: Request, res: Response) => {
-  const query = req.query;
-  const result = await TourService.getAllTours(query);
+  const options = pick(req.query, ["page", "limit", "sortBy", "sortOrder"]);
+  const filters = pick(req.query, tourSearchableFields);
+
+  const result = await TourService.getAllTours({ ...options, ...filters });
+
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,

@@ -4,6 +4,8 @@ import { deleteImageFromCloudinary } from "../../../config/cloudinary.config";
 import { ITourPayload } from "./tour.interfaces";
 import AppError from "../../errors/AppError";
 import { StatusCodes } from "http-status-codes";
+import { paginationHelper } from "../../helpers/paginationHelper";
+import { tourSearchableFields } from "./tour.constant";
 
 const createTour = async (payload: ITourPayload): Promise<Tour> => {
   const existing = await prisma.tour.findFirst({ where: { title: payload.title } });
@@ -66,10 +68,46 @@ const deleteTour = async (tourId: string): Promise<Tour> => {
   });
 };
 
-const getAllTours = async (query: any) => {
-  const tours = await prisma.tour.findMany({ orderBy: { createdAt: "desc" } });
-  return { data: tours, meta: { total: tours.length } };
+const getAllTours = async (query: Record<string, any>) => {
+  const { page, limit, skip, sortBy, sortOrder } = paginationHelper.calculatePagination(query);
+
+  const { searchTerm, ...filterData } = query;
+
+  const andConditions: any[] = [];
+
+  if (searchTerm) {
+    andConditions.push({
+      OR: tourSearchableFields.map((field) => ({
+        [field]: { contains: searchTerm, mode: "insensitive" },
+      })),
+    });
+  }
+
+  if (Object.keys(filterData).length > 0) {
+    const filterConditions = Object.keys(filterData).map((key) => ({
+      [key]: { equals: filterData[key] },
+    }));
+    andConditions.push(...filterConditions);
+  }
+
+  const whereConditions = andConditions.length > 0 ? { AND: andConditions } : {};
+
+  const [tours, total] = await Promise.all([
+    prisma.tour.findMany({
+      where: whereConditions,
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take: limit,
+    }),
+    prisma.tour.count({ where: whereConditions }),
+  ]);
+
+  return {
+    data: tours,
+    meta: { total, page, limit },
+  };
 };
+
 
 const getTourById = async (id: string) => {
   const tour = await prisma.tour.findUnique({ where: { id } });

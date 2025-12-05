@@ -27,6 +27,9 @@ model Tour {
   includedLocations     String[]       
   notIncludedLocations  String[]       
 
+  priceIncludes         String[]
+  priceExcludes         String[]
+
   reviews               Review[]
   bookings              Booking[]
 
