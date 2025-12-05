@@ -1,0 +1,86 @@
+import { prisma } from "../../utils/prisma";
+import { Tour } from "@prisma/client";
+import { deleteImageFromCloudinary } from "../../../config/cloudinary.config";
+import { ITourPayload } from "./tour.interfaces";
+import AppError from "../../errors/AppError";
+import { StatusCodes } from "http-status-codes";
+
+const createTour = async (payload: ITourPayload): Promise<Tour> => {
+  const existing = await prisma.tour.findFirst({ where: { title: payload.title } });
+  if (existing) throw new AppError(StatusCodes.BAD_REQUEST, "Tour already exists.");
+  if (!payload.guideId) throw new AppError(StatusCodes.BAD_REQUEST, "Guide ID is required");
+
+  return await prisma.$transaction(async (tx) => {
+    const tour = await tx.tour.create({ data: payload as any });
+    return tour;
+  });
+};
+
+const updateTour = async (
+  tourId: string,
+  guideId: string,
+  payload: Partial<ITourPayload>
+): Promise<Tour> => {
+  const tour = await prisma.tour.findUnique({ where: { id: tourId } });
+  if (!tour) throw new AppError(StatusCodes.NOT_FOUND, "Tour not found");
+  if (tour.guideId !== guideId) throw new AppError(StatusCodes.UNAUTHORIZED, "Unauthorized");
+
+  return await prisma.$transaction(async (tx) => {
+    // Merge old + new images
+    if (payload.images && payload.images.length > 0 && tour.images.length > 0) {
+      payload.images = [...tour.images, ...payload.images];
+    }
+
+    // Delete old thumbnail if replaced
+    if (payload.thumbnailImage && tour.thumbnailImage) {
+      await deleteImageFromCloudinary(tour.thumbnailImage);
+    }
+
+    const updatedTour = await tx.tour.update({
+      where: { id: tourId },
+      data: payload as any,
+    });
+
+    return updatedTour;
+  });
+};
+
+const deleteTour = async (tourId: string): Promise<Tour> => {
+  const tour = await prisma.tour.findUnique({ where: { id: tourId } });
+  if (!tour) throw new AppError(StatusCodes.NOT_FOUND, "Tour not found");
+
+  return await prisma.$transaction(async (tx) => {
+    // Delete images from Cloudinary first
+    try {
+      if (tour.thumbnailImage) await deleteImageFromCloudinary(tour.thumbnailImage);
+      if (tour.images.length > 0) {
+        await Promise.all(tour.images.map((url) => deleteImageFromCloudinary(url)));
+      }
+    } catch (error) {
+      throw new AppError(StatusCodes.INTERNAL_SERVER_ERROR, "Failed to delete tour images");
+    }
+
+    // Delete tour record
+    const deletedTour = await tx.tour.delete({ where: { id: tourId } });
+    return deletedTour;
+  });
+};
+
+const getAllTours = async (query: any) => {
+  const tours = await prisma.tour.findMany({ orderBy: { createdAt: "desc" } });
+  return { data: tours, meta: { total: tours.length } };
+};
+
+const getTourById = async (id: string) => {
+  const tour = await prisma.tour.findUnique({ where: { id } });
+  if (!tour) throw new AppError(StatusCodes.NOT_FOUND, "Tour not found");
+  return tour;
+};
+
+export const TourService = {
+  createTour,
+  updateTour,
+  deleteTour,
+  getAllTours,
+  getTourById,
+};
