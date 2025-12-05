@@ -89,7 +89,13 @@ const updateUserRoleOrStatus = catchAsync (async (req: Request, res: Response) =
 const updateMyProfile = catchAsync (async (req: Request, res: Response) => {
     const decodedToken = req.user as JwtPayload;
     const parsedData = typeof req.body.data === "string" ? JSON.parse(req.body.data) : req.body;
-    const result = await UserService.updateMyProfile(decodedToken.userId, parsedData);
+    
+    const payload = {
+    ...parsedData,
+    profilePic: req.file?.path,
+  };
+
+    const result = await UserService.updateMyProfile(decodedToken.userId, payload);
 
     sendResponse(res, {
       statusCode: StatusCodes.OK,

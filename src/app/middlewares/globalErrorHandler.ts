@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import httpStatus from "http-status-codes";
+import { deleteImageFromCloudinary } from "../../config/cloudinary.config";
 
-const globalErrorHandler = (
+const globalErrorHandler = async (
   err: any,
   req: Request,
   res: Response,
@@ -13,6 +14,16 @@ const globalErrorHandler = (
   let message = err.message || "Something went wrong!";
   let error = err;
 
+  //cloudinary error
+  if(req.file){
+    await deleteImageFromCloudinary(req.file.path)
+  }
+  if(req.files && Array.isArray(req.files) && req.files.length){
+    const imageUrls = (req.files as Express.Multer.File[]).map(file => file.path)
+
+    await Promise.all(imageUrls.map(url => deleteImageFromCloudinary(url)))
+
+  }
   
   // Prisma known errors
   // Duplicate

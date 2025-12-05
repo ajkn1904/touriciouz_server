@@ -4,6 +4,7 @@ import { prisma } from "../../utils/prisma";
 import config from "../../../config";
 import AppError from "../../errors/AppError";
 import { StatusCodes } from "http-status-codes";
+import { deleteImageFromCloudinary } from "../../../config/cloudinary.config";
 
 const createUser = async (payload: Prisma.UserCreateInput): Promise<User> => {
   if (payload.password) {
@@ -147,10 +148,7 @@ const updateMyProfile = async (userId: string, data: any) => {
     if (!user) throw new Error("User not found");
 
     if (data.email) {
-      throw new AppError(
-        StatusCodes.BAD_REQUEST,
-        "Email cannot be updated!"
-      );
+      throw new AppError(StatusCodes.BAD_REQUEST, "Email cannot be updated!");
     }
 
     if (data.password) {
@@ -160,13 +158,21 @@ const updateMyProfile = async (userId: string, data: any) => {
       );
     }
 
-    // guide-specific fields
-    const { expertise, dailyRate, ...userCoreData } = data;
+    let userCoreData = { ...data };
 
-    // update core data
+    if (data.profilePic) {
+      if (user.profilePic) {
+        await deleteImageFromCloudinary(user.profilePic);
+      }
+
+      userCoreData.profilePic = data.profilePic;
+    }
+
+    const { expertise, dailyRate, ...coreFields } = userCoreData;
+
     const updatedUser = await tx.user.update({
       where: { id: userId },
-      data: userCoreData,
+      data: coreFields,
       select: {
         id: true,
         name: true,
@@ -180,7 +186,9 @@ const updateMyProfile = async (userId: string, data: any) => {
     });
 
     let roleData = {};
-    // GUIDE → update guide table + return guide data
+
+    
+    //GUIDE-specific update
     if (user.role === UserRole.GUIDE) {
       const updatedGuide = await tx.guide.update({
         where: { userId },
