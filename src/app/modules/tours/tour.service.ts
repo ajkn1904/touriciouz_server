@@ -12,10 +12,8 @@ const createTour = async (payload: ITourPayload): Promise<Tour> => {
   if (existing) throw new AppError(StatusCodes.BAD_REQUEST, "Tour already exists.");
   if (!payload.guideId) throw new AppError(StatusCodes.BAD_REQUEST, "Guide ID is required");
 
-  return await prisma.$transaction(async (tx) => {
-    const tour = await tx.tour.create({ data: payload as any });
-    return tour;
-  });
+  const tour = await prisma.tour.create({ data: payload as any });
+  return tour;
 };
 
 const updateTour = async (
@@ -31,11 +29,6 @@ const updateTour = async (
     // Merge old + new images
     if (payload.images && payload.images.length > 0 && tour.images.length > 0) {
       payload.images = [...tour.images, ...payload.images];
-    }
-
-    // Delete old thumbnail if replaced
-    if (payload.thumbnailImage && tour.thumbnailImage) {
-      await deleteImageFromCloudinary(tour.thumbnailImage);
     }
 
     const updatedTour = await tx.tour.update({
@@ -54,7 +47,6 @@ const deleteTour = async (tourId: string): Promise<Tour> => {
   return await prisma.$transaction(async (tx) => {
     // Delete images from Cloudinary first
     try {
-      if (tour.thumbnailImage) await deleteImageFromCloudinary(tour.thumbnailImage);
       if (tour.images.length > 0) {
         await Promise.all(tour.images.map((url) => deleteImageFromCloudinary(url)));
       }
@@ -63,8 +55,8 @@ const deleteTour = async (tourId: string): Promise<Tour> => {
     }
 
     // Delete tour record
-    const deletedTour = await tx.tour.delete({ where: { id: tourId } });
-    return deletedTour;
+    return await prisma.tour.delete({ where: { id: tourId } });
+
   });
 };
 
@@ -95,7 +87,7 @@ const getAllTours = async (query: Record<string, any>) => {
   const [tours, total] = await Promise.all([
     prisma.tour.findMany({
       where: whereConditions,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy: sortBy ? { [sortBy]: sortOrder } : { createdAt: "desc" },
       skip,
       take: limit,
     }),

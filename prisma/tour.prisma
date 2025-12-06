@@ -8,7 +8,8 @@ model Tour {
   itinerary             String?
 
   category              TourCategory
-  price                 Float
+  packagePrice                 Float
+  guideFee              Float
   durationDays          Int            
   physicality           String?
   location              String
@@ -16,7 +17,6 @@ model Tour {
   meetingPoint          String?
   maxGroupSize          Int?
 
-  thumbnailImage        String?
   images                String[]
 
   

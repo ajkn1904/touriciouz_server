@@ -8,7 +8,7 @@ export const createTourSchema = z.object({
 
   category: z.nativeEnum(TourCategory),
 
-  price: z.number().min(0),
+  packagePrice: z.number().min(0),
   durationDays: z.number().min(1),
 
   physicality: z.string().optional(),
@@ -22,6 +22,8 @@ export const createTourSchema = z.object({
 
   includedLocations: z.array(z.string()).optional(),
   notIncludedLocations: z.array(z.string()).optional(),
+  priceIncludes: z.array(z.string()).optional(),
+  priceExcludes: z.array(z.string()).optional(),
 });
 
 export const updateTourSchema = createTourSchema.partial();

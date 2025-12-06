@@ -4,23 +4,26 @@ import { JwtPayload } from "jsonwebtoken";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { TourService } from "./tour.service";
-import { parseBody } from "../../helpers/parseBody";
-import { extractImages } from "../../helpers/extractImages";
 import pick from "../../helpers/pick";
 import { tourSearchableFields } from "./tour.constant";
+import { prisma } from "../../utils/prisma";
+import AppError from "../../errors/AppError";
+import { ITourPayload } from "./tour.interfaces";
+
 
 
 
 const createTour = catchAsync(async (req: Request, res: Response) => {
   const decoded = req.user as JwtPayload;
-  const body = parseBody(req);
-  const { thumbnailImage, images } = extractImages(req);
 
-  const payload = {
-    ...body,
-    guideId: decoded.userId,
-    thumbnailImage,
-    images,
+  const guide = await prisma.guide.findFirst({ where: { userId: decoded.userId } });
+  if (!guide) throw new AppError(StatusCodes.BAD_REQUEST, "Guide not found");
+
+  const payload: ITourPayload = {
+    ...req.body,
+    guideId: guide.id,         
+    guideFee: guide.dailyRate, 
+    images: (req.files as Express.Multer.File[]).map(file => file.path),
   };
 
   const result = await TourService.createTour(payload);
@@ -33,16 +36,20 @@ const createTour = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const updateTour = catchAsync(async (req: Request, res: Response) => {
+const updateTour = catchAsync(async (req: Request, res: Response) => {  
   const decoded = req.user as JwtPayload;
-  const body = parseBody(req);
-  const { thumbnailImage, images } = extractImages(req);
 
-  const payload: any = { ...body };
-  if (thumbnailImage) payload.thumbnailImage = thumbnailImage;
-  if (images.length > 0) payload.images = images;
+  const guide = await prisma.guide.findFirst({ where: { userId: decoded.userId } });
+  if (!guide) throw new AppError(StatusCodes.BAD_REQUEST, "Guide not found");
+  const guideFee = guide.dailyRate;
 
-  const result = await TourService.updateTour(req.params.id, decoded.userId, payload);
+  const payload: any = { 
+    ...req.body,
+    guideFee: guideFee, 
+    images: (req.files as Express.Multer.File[]).map(file => file.path) };
+  
+
+  const result = await TourService.updateTour(req.params.id, guide.id, payload);
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
