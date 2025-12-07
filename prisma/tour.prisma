@@ -29,6 +29,7 @@ model Tour {
 
   priceIncludes         String[]
   priceExcludes         String[]
+  rating      Float          @default(0.0)
 
   reviews               Review[]
   bookings              Booking[]
