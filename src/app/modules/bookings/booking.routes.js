@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.BookingRouter = void 0;
+const express_1 = require("express");
+const checkAuth_1 = require("../../middlewares/checkAuth");
+const validationRequest_1 = require("../../middlewares/validationRequest");
+const booking_validation_1 = require("./booking.validation");
+const booking_controller_1 = require("./booking.controller");
+const client_1 = require("@prisma/client");
+const router = (0, express_1.Router)();
+router.post("/", (0, checkAuth_1.checkAuth)(client_1.UserRole.TOURIST), (0, validationRequest_1.validationRequest)(booking_validation_1.createBookingZodSchema), booking_controller_1.BookingController.createBooking);
+router.get("/", (0, checkAuth_1.checkAuth)(client_1.UserRole.ADMIN), booking_controller_1.BookingController.getAllBookings);
+router.get("/my-bookings", (0, checkAuth_1.checkAuth)(...Object.values(client_1.UserRole)), booking_controller_1.BookingController.getUserBookings);
+router.get("/:id", (0, checkAuth_1.checkAuth)(...Object.values(client_1.UserRole)), booking_controller_1.BookingController.getBookingById);
+router.patch("/status/:id", (0, checkAuth_1.checkAuth)(...Object.values(client_1.UserRole)), (0, validationRequest_1.validationRequest)(booking_validation_1.updateBookingStatusZodSchema), booking_controller_1.BookingController.updateBookingStatus);
+exports.BookingRouter = router;

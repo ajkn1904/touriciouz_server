@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ReviewRouter = void 0;
+const express_1 = require("express");
+const review_controller_1 = require("./review.controller");
+const checkAuth_1 = require("../../middlewares/checkAuth");
+const client_1 = require("@prisma/client");
+const validationRequest_1 = require("../../middlewares/validationRequest");
+const review_validation_1 = require("./review.validation");
+const router = (0, express_1.Router)();
+router.post("/", (0, checkAuth_1.checkAuth)(client_1.UserRole.TOURIST), (0, validationRequest_1.validationRequest)(review_validation_1.createReviewZodSchema), review_controller_1.ReviewController.createReview);
+router.get("/tour/:tourId", review_controller_1.ReviewController.getReviewsForTour);
+router.get("/guide/:guideId", review_controller_1.ReviewController.getReviewsForGuide);
+router.patch("/:id", (0, checkAuth_1.checkAuth)(client_1.UserRole.TOURIST), (0, validationRequest_1.validationRequest)(review_validation_1.updateReviewZodSchema), review_controller_1.ReviewController.updateReview);
+router.delete("/:id", (0, checkAuth_1.checkAuth)(client_1.UserRole.TOURIST), review_controller_1.ReviewController.deleteReview);
+exports.ReviewRouter = router;

@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TourRouter = void 0;
+const express_1 = require("express");
+const tour_controller_1 = require("./tour.controller");
+const checkAuth_1 = require("../../middlewares/checkAuth");
+const client_1 = require("@prisma/client");
+const multer_config_1 = require("../../../config/multer.config");
+const validationRequest_1 = require("../../middlewares/validationRequest");
+const tour_validation_1 = require("./tour.validation");
+const router = (0, express_1.Router)();
+router.post("/", (0, checkAuth_1.checkAuth)(client_1.UserRole.GUIDE), multer_config_1.multerUpload.array("files"), (req, res, next) => {
+    req.body = tour_validation_1.createTourSchema.parse(JSON.parse(req.body.data));
+    return tour_controller_1.TourController.createTour(req, res, next);
+});
+router.get("/", tour_controller_1.TourController.getAllTours);
+router.get("/:id", tour_controller_1.TourController.getTourById);
+router.patch("/:id", (0, checkAuth_1.checkAuth)(client_1.UserRole.GUIDE), multer_config_1.multerUpload.array("files"), (0, validationRequest_1.validationRequest)(tour_validation_1.updateTourSchema), tour_controller_1.TourController.updateTour);
+router.delete("/:id", (0, checkAuth_1.checkAuth)(client_1.UserRole.GUIDE, client_1.UserRole.ADMIN), tour_controller_1.TourController.deleteTour);
+exports.TourRouter = router;

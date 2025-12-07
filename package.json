@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.16.3",
+    "@vercel/postgres": "^0.10.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^1.21.0",
@@ -36,6 +37,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only ./src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "prisma": {
