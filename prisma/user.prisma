@@ -9,6 +9,7 @@ model User {
 
   role         UserRole   @default(TOURIST)
   status       UserStatus @default(ACTIVE)
+  phone        String     @default("")
   
   // Role relationships
   admin        Admin?
@@ -24,7 +25,10 @@ model User {
 model Admin {
   id      String @id @default(uuid())
   userId  String @unique
+  balance Float @default(0)
   user    User   @relation(fields: [userId], references: [id])
+  
+  earnings    Earnings[] 
 }
 
 // GUIDE
@@ -35,12 +39,14 @@ model Guide {
 
   expertise   TourCategory[] 
   dailyRate   Float
+  balance     Float          @default(0)
   rating      Float          @default(0.0)
   totalTours  Int            @default(0)
 
   listings    Tour[]
   bookings    Booking[]
   reviews Review[]
+  earnings    Earnings[] 
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

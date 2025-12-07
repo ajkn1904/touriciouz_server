@@ -86,14 +86,22 @@ const updateUserRoleOrStatus = catchAsync (async (req: Request, res: Response) =
 });
 
 
-const updateMyProfile = catchAsync (async (req: Request, res: Response) => {
-    const decodedToken = req.user as JwtPayload;
-    const parsedData = typeof req.body.data === "string" ? JSON.parse(req.body.data) : req.body;
-    
-    const payload = {
-    ...parsedData,
-    profilePic: req.file?.path,
-  };
+const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
+  const decodedToken = req.user as JwtPayload;
+
+  const payload: any = { ...req.body };
+
+  if (payload.languages && typeof payload.languages === "string") {
+    try {
+      payload.languages = JSON.parse(payload.languages);
+    } catch {
+      payload.languages = [];
+    }
+  }
+
+  if (req.file?.path) {
+    payload.profilePic = req.file.path;
+  }
 
     const result = await UserService.updateMyProfile(decodedToken.userId, payload);
 

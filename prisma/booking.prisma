@@ -12,6 +12,7 @@ model Booking {
   status      BookingStatus @default(PENDING)
 
   payment     Payment?
+  earnings    Earnings[] 
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

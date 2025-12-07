@@ -2,24 +2,33 @@ import { Router } from "express";
 import { AuthRoutes } from "../modules/auth/auth.routes";
 import { UserRouter } from "../modules/user/user.routes";
 import { TourRouter } from "../modules/tours/tour.routes";
+import { BookingRouter } from "../modules/bookings/booking.routes";
+import { PaymentRouter } from "../modules/payment/routes";
 
 export const router = Router();
 
 const moduleRoutes = [
-    {
-        path: "/auth",
-        route: AuthRoutes,
-    },
-    {
-        path: "/user",
-        route: UserRouter,
-    },
-    {
-        path: "/tours",
-        route: TourRouter,
-    },
-]
-
+  {
+    path: "/auth",
+    route: AuthRoutes,
+  },
+  {
+    path: "/user",
+    route: UserRouter,
+  },
+  {
+    path: "/tours",
+    route: TourRouter,
+  },
+  {
+    path: "/booking",
+    route: BookingRouter,
+  },
+  {
+    path: "/payment",
+    route: PaymentRouter,
+  },
+];
 
 moduleRoutes.forEach((route) => {
   router.use(route.path, route.route);

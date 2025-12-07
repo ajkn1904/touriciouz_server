@@ -54,6 +54,7 @@ const getAllUsers = async (): Promise<Omit<User, "password">[]> => {
       name: true,
       email: true,
       profilePic: true,
+      phone: true,
       bio: true,
       languages: true,
       role: true,
@@ -72,6 +73,7 @@ const getUserById = async (id: string): Promise<Omit<User, "password"> | null> =
       id: true,
       name: true,
       email: true,
+      phone: true,
       profilePic: true,
       bio: true,
       languages: true,
@@ -140,39 +142,26 @@ const getMe = async (
 
 const updateMyProfile = async (userId: string, data: any) => {
   return await prisma.$transaction(async (tx) => {
-
-    const user = await tx.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) throw new Error("User not found");
+    const user = await tx.user.findUnique({ where: { id: userId } });
+    if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
 
     if (data.email) {
       throw new AppError(StatusCodes.BAD_REQUEST, "Email cannot be updated!");
     }
 
     if (data.password) {
-      data.password = await bcrypt.hash(
-        data.password,
-        Number(config.salt_round)
-      );
+      data.password = await bcrypt.hash(data.password, Number(config.salt_round));
     }
 
-    let userCoreData = { ...data };
-
-    if (data.profilePic) {
-      if (user.profilePic) {
-        await deleteImageFromCloudinary(user.profilePic);
-      }
-
-      userCoreData.profilePic = data.profilePic;
-    }
-
-    const { expertise, dailyRate, ...coreFields } = userCoreData;
+    const fieldsToUpdate: any = {};
+    const allowedFields = ["name", "password", "bio", "languages", "profilePic", "phone"];
+    allowedFields.forEach((f) => {
+      if (data[f] !== undefined) fieldsToUpdate[f] = data[f];
+    });
 
     const updatedUser = await tx.user.update({
       where: { id: userId },
-      data: coreFields,
+      data: fieldsToUpdate,
       select: {
         id: true,
         name: true,
@@ -180,6 +169,7 @@ const updateMyProfile = async (userId: string, data: any) => {
         profilePic: true,
         bio: true,
         languages: true,
+        phone: true,
         role: true,
         status: true,
       },
@@ -190,21 +180,18 @@ const updateMyProfile = async (userId: string, data: any) => {
     
     //GUIDE-specific update
     if (user.role === UserRole.GUIDE) {
-      const updatedGuide = await tx.guide.update({
-        where: { userId },
-        data: {
-          ...(expertise !== undefined ? { expertise } : {}),
-          ...(dailyRate !== undefined ? { dailyRate } : {}),
-        },
-        select: {
-          expertise: true,
-          dailyRate: true,
-          rating: true,
-          totalTours: true,
-        },
-      });
+      const guideUpdate: any = {};
+      if (data.expertise !== undefined) guideUpdate.expertise = data.expertise;
+      if (data.dailyRate !== undefined) guideUpdate.dailyRate = data.dailyRate;
 
-      roleData = { focus: updatedGuide };
+      if (Object.keys(guideUpdate).length > 0) {
+        const updatedGuide = await tx.guide.update({
+          where: { userId },
+          data: guideUpdate,
+          select: { expertise: true, dailyRate: true, rating: true, totalTours: true },
+        });
+        roleData = { guide: updatedGuide };
+      }
     }
 
     return {
@@ -213,6 +200,7 @@ const updateMyProfile = async (userId: string, data: any) => {
     };
   });
 };
+
 
 
 
