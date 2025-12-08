@@ -5,6 +5,8 @@ import config from "../../../config";
 import AppError from "../../errors/AppError";
 import { StatusCodes } from "http-status-codes";
 import { deleteImageFromCloudinary } from "../../../config/cloudinary.config";
+import { paginationHelper } from "../../helpers/paginationHelper";
+import { userSearchableFields } from "./user.constant";
 
 const createUser = async (payload: Prisma.UserCreateInput): Promise<User> => {
   if (payload.password) {
@@ -45,25 +47,66 @@ const createUser = async (payload: Prisma.UserCreateInput): Promise<User> => {
 };
 
 
-const getAllUsers = async (): Promise<Omit<User, "password">[]> => {
+const getAllUsers = async (query: Record<string, any>) => {
+  const { page, limit, skip, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(query);
 
-  return await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      profilePic: true,
-      phone: true,
-      bio: true,
-      languages: true,
-      role: true,
-      status: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  const { searchTerm, sortBy: _sb, sortOrder: _so, ...filterData} = query;
+
+  const andConditions: any[] = [];
+
+  // search
+  if (searchTerm) {
+    andConditions.push({
+      OR: userSearchableFields.map((field) => ({
+        [field]: { contains: searchTerm, mode: "insensitive" },
+      })),
+    });
+  }
+
+  // filters
+  if (Object.keys(filterData).length > 0) {
+    const filterConditions = Object.keys(filterData).map((key) => ({
+      [key]: { equals: filterData[key] },
+    }));
+
+    andConditions.push(...filterConditions);
+  }
+
+  const whereConditions =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
+  
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where: whereConditions,
+      orderBy: sortBy ? { [sortBy]: sortOrder } : { createdAt: "desc" },
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        profilePic: true,
+        phone: true,
+        bio: true,
+        languages: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+
+    prisma.user.count({ where: whereConditions }),
+  ]);
+
+  return {
+    data: users,
+    meta: { total, page, totalPage:Math.ceil(total/limit), limit },
+  };
 };
+
 
 
 const getUserById = async (id: string): Promise<Omit<User, "password"> | null> => {

@@ -28,6 +28,8 @@ const sendResponse_1 = __importDefault(require("../../utils/sendResponse"));
 const user_service_1 = require("./user.service");
 const http_status_codes_1 = require("http-status-codes");
 const catchAsync_1 = __importDefault(require("../../utils/catchAsync"));
+const pick_1 = __importDefault(require("../../helpers/pick"));
+const user_constant_1 = require("./user.constant");
 const createUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const _a = req.body, { role } = _a, userData = __rest(_a, ["role"]);
     const result = yield user_service_1.UserService.createUser(Object.assign(Object.assign({}, userData), { role }));
@@ -39,12 +41,15 @@ const createUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
     });
 }));
 const getAllUsers = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield user_service_1.UserService.getAllUsers();
+    const options = (0, pick_1.default)(req.query, ["page", "limit", "sortBy", "sortOrder"]);
+    const filters = (0, pick_1.default)(req.query, [...user_constant_1.userSearchableFields, "role", "status", "sortBy", "sortOrder"]);
+    const result = yield user_service_1.UserService.getAllUsers(Object.assign(Object.assign(Object.assign({}, options), filters), { searchTerm: req.query.searchTerm }));
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_codes_1.StatusCodes.OK,
         success: true,
         message: "Users retrieved successfully",
-        data: result,
+        data: result.data,
+        meta: result.meta
     });
 }));
 const getUserById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {

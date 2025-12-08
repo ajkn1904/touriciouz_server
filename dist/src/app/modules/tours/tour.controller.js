@@ -67,7 +67,8 @@ const getAllTours = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
         statusCode: http_status_codes_1.StatusCodes.OK,
         success: true,
         message: "Tours retrieved successfully",
-        data: result,
+        data: result.data,
+        meta: result.meta
     });
 }));
 const getTourById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {

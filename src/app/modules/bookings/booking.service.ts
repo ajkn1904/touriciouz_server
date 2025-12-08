@@ -3,6 +3,7 @@ import { SSLService } from "../sslCommerz/sslCommerz.service";
 import { getTransactionId } from "../../utils/getTransactionId";
 import AppError from "../../errors/AppError";
 import { StatusCodes } from "http-status-codes";
+import { paginationHelper } from "../../helpers/paginationHelper";
 
 const prisma = new PrismaClient();
 
@@ -75,20 +76,113 @@ const createBooking = async (payload: any, userId: string) => {
   };
 };
 
-const getUserBookings = async (userId: string) => {
+const getUserBookings = async (userId: string, query: Record<string, any>) => {
   const tourist = await prisma.tourist.findUnique({
-    where: { userId: userId },
+    where: { userId },
   });
 
   if (!tourist) {
     throw new AppError(StatusCodes.NOT_FOUND, "Tourist profile not found");
   }
 
-  return prisma.booking.findMany({
-    where: { touristId: tourist.id },
-    include: { tour: true, payment: true },
-  });
+  const { page, limit, skip, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(query);
+
+  const { searchTerm, status, sortBy: _sb, sortOrder: _so, ...filters } = query;
+
+  const where: any = {
+    touristId: tourist.id,
+  };
+
+
+  if (searchTerm) {
+    where.OR = [
+      { status: { contains: searchTerm, mode: "insensitive" } },
+      { tour: { title: { contains: searchTerm, mode: "insensitive" } } },
+      { guide: { user: { name: { contains: searchTerm, mode: "insensitive" } } } },
+    ];
+  }
+
+  
+  if (status) {
+    where.status = status;
+  }
+
+  const [bookings, total] = await Promise.all([
+    prisma.booking.findMany({
+      where,
+      include: {
+        tour: {
+          select: {
+            id: true,
+            title: true,
+            category: true,
+            packagePrice: true,
+            guideFee: true,
+            durationDays: true,
+            physicality: true,
+            location: true,
+            meetingPoint: true,
+            maxGroupSize: true,
+            ageLimit: true,
+            departure: true,
+            departureTime: true,
+            rating: true,
+          },
+        },
+
+        payment: {
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            transactionId: true,
+          },
+        },
+
+        guide: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                languages: true,
+              },
+            },
+          },
+        },
+
+        tourist: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                languages: true,
+              },
+            },
+          },
+        },
+      },
+
+      orderBy: sortBy ? { [sortBy]: sortOrder } : { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+
+    prisma.booking.count({ where }),
+  ]);
+
+  return {
+    data: bookings,
+    meta: { total, page, totalPage:Math.ceil(total/limit), limit },
+  };
 };
+
 
 const getBookingById = async (bookingId: string) => {
   return prisma.booking.findUnique({
@@ -97,11 +191,102 @@ const getBookingById = async (bookingId: string) => {
   });
 };
 
-const getAllBookings = async () => {
-  return prisma.booking.findMany({
-    include: { tour: true, payment: true, tourist: true },
-  });
+const getAllBookings = async (query: Record<string, any>) => {
+  const { page, limit, skip, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(query);
+
+  const { searchTerm, status, sortBy: _sb, sortOrder: _so, ...filters } = query;
+
+  const where: any = {};
+
+
+  if (searchTerm) {
+    where.OR = [
+      { status: { contains: searchTerm, mode: "insensitive" } },
+      { tour: { title: { contains: searchTerm, mode: "insensitive" } } },
+      { guide: { user: { name: { contains: searchTerm, mode: "insensitive" } } } },
+      { tourist: { user: { name: { contains: searchTerm, mode: "insensitive" } } } },
+    ];
+  }
+
+
+  if (status) {
+    where.status = status;
+  }
+
+  const [bookings, total] = await Promise.all([
+    prisma.booking.findMany({
+      where,
+      include: {
+        tour: {
+          select:{
+              id: true,
+              title: true,
+              category: true,
+              packagePrice: true,
+              guideFee: true,
+              durationDays: true,
+              physicality: true,
+              location: true,
+              meetingPoint: true,
+              maxGroupSize: true,
+              ageLimit: true,
+              departure: true,
+              departureTime: true,
+              rating: true,
+            }
+          },
+        payment: {
+          select:{
+            id: true,
+            amount: true,
+            status: true,
+            transactionId: true,
+          }
+        },
+        guide: {
+            select: {user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                languages: true,
+              },
+            },
+          },
+        },
+
+        tourist: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                languages: true
+              },
+            },
+          },
+        },
+      },
+
+      orderBy: sortBy ? { [sortBy]: sortOrder } : { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+
+    prisma.booking.count({ where }),
+  ]);
+
+  return {
+    data: bookings,
+    meta: { total, page, totalPage:Math.ceil(total/limit), limit },
+  };
 };
+
+
 
 const updateBookingStatus = async (
   bookingId: string,

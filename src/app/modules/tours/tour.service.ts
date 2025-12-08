@@ -96,7 +96,7 @@ const getAllTours = async (query: Record<string, any>) => {
 
   return {
     data: tours,
-    meta: { total, page, limit },
+    meta: { total, page, totalPage:Math.ceil(total/limit), limit },
   };
 };
 

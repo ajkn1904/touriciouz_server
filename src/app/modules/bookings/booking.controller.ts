@@ -3,6 +3,8 @@ import { BookingService } from "./booking.service";
 import sendResponse from "../../utils/sendResponse";
 import catchAsync from "../../utils/catchAsync";
 import { JwtPayload } from "jsonwebtoken";
+import pick from "../../helpers/pick";
+import { bookingSearchableFields } from "./booking.constant";
 
 const createBooking = catchAsync(async (req: Request, res: Response) => {
   const decodedToken = req.user as JwtPayload;
@@ -26,14 +28,21 @@ const createBooking = catchAsync(async (req: Request, res: Response) => {
 
 const getUserBookings = catchAsync(async (req: Request, res: Response) => {
   const decodedToken = req.user as JwtPayload;
-  const bookings = await BookingService.getUserBookings(decodedToken.userId);
+
+  const options = pick(req.query, ["page", "limit", "sortBy", "sortOrder"]);
+  const filters = pick(req.query, bookingSearchableFields); 
+
+  const bookings = await BookingService.getUserBookings( decodedToken.userId, { ...filters, ...options });
+
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: "Bookings retrieved successfully",
-    data: bookings
+    data: bookings.data,
+    meta: bookings.meta,
   });
 });
+
 
 const getBookingById = catchAsync(async (req: Request, res: Response) => {
   const booking = await BookingService.getBookingById(req.params.id);
@@ -46,12 +55,16 @@ const getBookingById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllBookings = catchAsync(async (req: Request, res: Response) => {
-  const bookings = await BookingService.getAllBookings();
+  const options = pick(req.query, ["page", "limit", "sortBy", "sortOrder"]);
+  const filters = pick(req.query, bookingSearchableFields);
+
+  const bookings = await BookingService.getAllBookings({...filters, ...options});
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: "All bookings retrieved successfully",
-    data: bookings,
+    data: bookings.data,
+    meta: bookings.meta
   });
 });
 

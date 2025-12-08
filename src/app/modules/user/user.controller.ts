@@ -6,6 +6,8 @@ import { StatusCodes } from "http-status-codes";
 import { JwtPayload } from "jsonwebtoken";
 import AppError from "../../errors/AppError";
 import catchAsync from "../../utils/catchAsync";
+import pick from "../../helpers/pick";
+import { userSearchableFields } from "./user.constant";
 
 const createUser = catchAsync (async (req: Request, res: Response) => {
     const { role, ...userData } = req.body;
@@ -20,16 +22,25 @@ const createUser = catchAsync (async (req: Request, res: Response) => {
 
 });
 
-const getAllUsers = catchAsync (async (req: Request, res: Response) => {    
-    const result = await UserService.getAllUsers();
-    sendResponse(res, {
-      statusCode: StatusCodes.OK,
-      success: true,
-      message: "Users retrieved successfully",
-      data: result,
-    });
+const getAllUsers = catchAsync(async (req: Request, res: Response) => {
+  const options = pick(req.query, ["page", "limit", "sortBy", "sortOrder"]);
+  const filters = pick(req.query, [...userSearchableFields, "role", "status", "sortBy", "sortOrder"]);
 
+  const result = await UserService.getAllUsers({
+    ...options,
+    ...filters,
+    searchTerm: req.query.searchTerm as string,
+  });
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Users retrieved successfully",
+    data: result.data,
+    meta: result.meta
+  });
 });
+
 
 
 const getUserById = catchAsync(async (req: Request, res: Response) => {

@@ -104,7 +104,7 @@ const getAllTours = (query) => __awaiter(void 0, void 0, void 0, function* () {
     ]);
     return {
         data: tours,
-        meta: { total, page, limit },
+        meta: { total, page, totalPage: Math.ceil(total / limit), limit },
     };
 });
 const getTourById = (id) => __awaiter(void 0, void 0, void 0, function* () {

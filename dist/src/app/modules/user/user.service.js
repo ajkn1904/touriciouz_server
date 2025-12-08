@@ -8,6 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -19,6 +30,8 @@ const prisma_1 = require("../../utils/prisma");
 const config_1 = __importDefault(require("../../../config"));
 const AppError_1 = __importDefault(require("../../errors/AppError"));
 const http_status_codes_1 = require("http-status-codes");
+const paginationHelper_1 = require("../../helpers/paginationHelper");
+const user_constant_1 = require("./user.constant");
 const createUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     if (payload.password) {
         payload.password = yield bcryptjs_1.default.hash(payload.password, Number(config_1.default.salt_round));
@@ -48,23 +61,52 @@ const createUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
         return newUser;
     }));
 });
-const getAllUsers = () => __awaiter(void 0, void 0, void 0, function* () {
-    return yield prisma_1.prisma.user.findMany({
-        orderBy: { createdAt: "desc" },
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            profilePic: true,
-            phone: true,
-            bio: true,
-            languages: true,
-            role: true,
-            status: true,
-            createdAt: true,
-            updatedAt: true,
-        },
-    });
+const getAllUsers = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    const { page, limit, skip, sortBy, sortOrder } = paginationHelper_1.paginationHelper.calculatePagination(query);
+    const { searchTerm, sortBy: _sb, sortOrder: _so } = query, filterData = __rest(query, ["searchTerm", "sortBy", "sortOrder"]);
+    const andConditions = [];
+    // search
+    if (searchTerm) {
+        andConditions.push({
+            OR: user_constant_1.userSearchableFields.map((field) => ({
+                [field]: { contains: searchTerm, mode: "insensitive" },
+            })),
+        });
+    }
+    // filters
+    if (Object.keys(filterData).length > 0) {
+        const filterConditions = Object.keys(filterData).map((key) => ({
+            [key]: { equals: filterData[key] },
+        }));
+        andConditions.push(...filterConditions);
+    }
+    const whereConditions = andConditions.length > 0 ? { AND: andConditions } : {};
+    const [users, total] = yield Promise.all([
+        prisma_1.prisma.user.findMany({
+            where: whereConditions,
+            orderBy: sortBy ? { [sortBy]: sortOrder } : { createdAt: "desc" },
+            skip,
+            take: limit,
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                profilePic: true,
+                phone: true,
+                bio: true,
+                languages: true,
+                role: true,
+                status: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        }),
+        prisma_1.prisma.user.count({ where: whereConditions }),
+    ]);
+    return {
+        data: users,
+        meta: { total, page, totalPage: Math.ceil(total / limit), limit },
+    };
 });
 const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     return yield prisma_1.prisma.user.findUnique({

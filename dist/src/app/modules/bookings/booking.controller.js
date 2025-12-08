@@ -16,6 +16,8 @@ exports.BookingController = void 0;
 const booking_service_1 = require("./booking.service");
 const sendResponse_1 = __importDefault(require("../../utils/sendResponse"));
 const catchAsync_1 = __importDefault(require("../../utils/catchAsync"));
+const pick_1 = __importDefault(require("../../helpers/pick"));
+const booking_constant_1 = require("./booking.constant");
 const createBooking = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const decodedToken = req.user;
     const payload = {
@@ -32,12 +34,15 @@ const createBooking = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
 }));
 const getUserBookings = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const decodedToken = req.user;
-    const bookings = yield booking_service_1.BookingService.getUserBookings(decodedToken.userId);
+    const options = (0, pick_1.default)(req.query, ["page", "limit", "sortBy", "sortOrder"]);
+    const filters = (0, pick_1.default)(req.query, booking_constant_1.bookingSearchableFields);
+    const bookings = yield booking_service_1.BookingService.getUserBookings(decodedToken.userId, Object.assign(Object.assign({}, filters), options));
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
         message: "Bookings retrieved successfully",
-        data: bookings
+        data: bookings.data,
+        meta: bookings.meta,
     });
 }));
 const getBookingById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -50,12 +55,15 @@ const getBookingById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
     });
 }));
 const getAllBookings = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const bookings = yield booking_service_1.BookingService.getAllBookings();
+    const options = (0, pick_1.default)(req.query, ["page", "limit", "sortBy", "sortOrder"]);
+    const filters = (0, pick_1.default)(req.query, booking_constant_1.bookingSearchableFields);
+    const bookings = yield booking_service_1.BookingService.getAllBookings(Object.assign(Object.assign({}, filters), options));
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
         message: "All bookings retrieved successfully",
-        data: bookings,
+        data: bookings.data,
+        meta: bookings.meta
     });
 }));
 const updateBookingStatus = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
