@@ -69,10 +69,8 @@ const getAllBookings = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
-  const updated = await BookingService.updateBookingStatus(
-    req.params.id,
-    req.body.status
-  );
+  const user = req.user as JwtPayload
+  const updated = await BookingService.updateBookingStatus(req.params.id, req.body.status, user.role);
   sendResponse(res, {
     statusCode: 200,
     success: true,

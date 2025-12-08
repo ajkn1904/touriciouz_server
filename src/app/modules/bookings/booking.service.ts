@@ -1,9 +1,10 @@
-import { PrismaClient, BookingStatus, PaymentStatus } from "@prisma/client";
+import { PrismaClient, BookingStatus, PaymentStatus, UserRole } from "@prisma/client";
 import { SSLService } from "../sslCommerz/sslCommerz.service";
 import { getTransactionId } from "../../utils/getTransactionId";
 import AppError from "../../errors/AppError";
 import { StatusCodes } from "http-status-codes";
 import { paginationHelper } from "../../helpers/paginationHelper";
+import { JwtPayload } from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
@@ -290,7 +291,8 @@ const getAllBookings = async (query: Record<string, any>) => {
 
 const updateBookingStatus = async (
   bookingId: string,
-  status: BookingStatus
+  status: BookingStatus,
+  userRole: string
 ) => {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
@@ -298,6 +300,13 @@ const updateBookingStatus = async (
   });
 
   if (!booking) throw new AppError(StatusCodes.NOT_FOUND, "Booking not found");
+
+  if (status === BookingStatus.CANCELLED && booking.payment?.status === PaymentStatus.PAID) {
+    if ( userRole !== UserRole.ADMIN && !(userRole === UserRole.GUIDE && booking.guideId === booking.guide.id)) {
+      throw new AppError(StatusCodes.FORBIDDEN, "Only the guide or admin can cancel a paid booking");
+    }
+  }
+
 
   // Update booking status
   const updatedBooking = await prisma.booking.update({
@@ -339,8 +348,18 @@ const updateBookingStatus = async (
     });
   }
 
+if (status === BookingStatus.CANCELLED && booking.payment) {
+  if (booking.payment.status === PaymentStatus.PAID) {
+    await prisma.payment.update({
+      where: { bookingId },
+      data: { status: PaymentStatus.REFUNDED },
+    });
+  }
+}
+
   return updatedBooking;
 };
+
 
 export const BookingService = {
   createBooking,

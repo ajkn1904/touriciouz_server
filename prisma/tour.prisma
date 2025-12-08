@@ -8,7 +8,7 @@ model Tour {
   itinerary             String?
 
   category              TourCategory
-  packagePrice                 Float
+  packagePrice          Float
   guideFee              Float
   durationDays          Int            
   physicality           String?
@@ -29,7 +29,8 @@ model Tour {
 
   priceIncludes         String[]
   priceExcludes         String[]
-  rating      Float          @default(0.0)
+  rating                Float @default(0.0)
+  isActive              Boolean @default(true)
 
   reviews               Review[]
   bookings              Booking[]
