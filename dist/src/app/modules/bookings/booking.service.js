@@ -264,14 +264,19 @@ const getAllBookings = (query) => __awaiter(void 0, void 0, void 0, function* ()
         meta: { total, page, totalPage: Math.ceil(total / limit), limit },
     };
 });
-const updateBookingStatus = (bookingId, status) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+const updateBookingStatus = (bookingId, status, userRole) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     const booking = yield prisma.booking.findUnique({
         where: { id: bookingId },
         include: { payment: true, guide: true },
     });
     if (!booking)
         throw new AppError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, "Booking not found");
+    if (status === client_1.BookingStatus.CANCELLED && ((_a = booking.payment) === null || _a === void 0 ? void 0 : _a.status) === client_1.PaymentStatus.PAID) {
+        if (userRole !== client_1.UserRole.ADMIN && !(userRole === client_1.UserRole.GUIDE && booking.guideId === booking.guide.id)) {
+            throw new AppError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, "Only the guide or admin can cancel a paid booking");
+        }
+    }
     // Update booking status
     const updatedBooking = yield prisma.booking.update({
         where: { id: bookingId },
@@ -279,7 +284,7 @@ const updateBookingStatus = (bookingId, status) => __awaiter(void 0, void 0, voi
     });
     // Run payout when completed
     if (status === client_1.BookingStatus.COMPLETED) {
-        const total = ((_a = booking.payment) === null || _a === void 0 ? void 0 : _a.amount) || 0;
+        const total = ((_b = booking.payment) === null || _b === void 0 ? void 0 : _b.amount) || 0;
         const adminShare = total * 0.1;
         const guideShare = total * 0.9;
         yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
@@ -307,6 +312,14 @@ const updateBookingStatus = (bookingId, status) => __awaiter(void 0, void 0, voi
                 });
             }
         }));
+    }
+    if (status === client_1.BookingStatus.CANCELLED && booking.payment) {
+        if (booking.payment.status === client_1.PaymentStatus.PAID) {
+            yield prisma.payment.update({
+                where: { bookingId },
+                data: { status: client_1.PaymentStatus.REFUNDED },
+            });
+        }
     }
     return updatedBooking;
 });

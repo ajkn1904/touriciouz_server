@@ -12,9 +12,18 @@ const createTour = async (payload: ITourPayload): Promise<Tour> => {
   if (existing) throw new AppError(StatusCodes.BAD_REQUEST, "Tour already exists.");
   if (!payload.guideId) throw new AppError(StatusCodes.BAD_REQUEST, "Guide ID is required");
 
-  const tour = await prisma.tour.create({ data: payload as any });
-  return tour;
+  return await prisma.$transaction(async (tx) => {
+    const tour = await tx.tour.create({ data: payload as any });
+
+    await tx.guide.update({
+      where: { id: payload.guideId },
+      data: { totalTours: { increment: 1 } },
+    });
+
+    return tour;
+  });
 };
+
 
 const updateTour = async (
   tourId: string,

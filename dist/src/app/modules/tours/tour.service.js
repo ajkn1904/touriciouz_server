@@ -36,8 +36,14 @@ const createTour = (payload) => __awaiter(void 0, void 0, void 0, function* () {
         throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "Tour already exists.");
     if (!payload.guideId)
         throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "Guide ID is required");
-    const tour = yield prisma_1.prisma.tour.create({ data: payload });
-    return tour;
+    return yield prisma_1.prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+        const tour = yield tx.tour.create({ data: payload });
+        yield tx.guide.update({
+            where: { id: payload.guideId },
+            data: { totalTours: { increment: 1 } },
+        });
+        return tour;
+    }));
 });
 const updateTour = (tourId, guideId, payload) => __awaiter(void 0, void 0, void 0, function* () {
     const tour = yield prisma_1.prisma.tour.findUnique({ where: { id: tourId } });
