@@ -119,10 +119,47 @@ const getTourById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         throw new AppError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, "Tour not found");
     return tour;
 });
+const getGuideTours = (guideId, query) => __awaiter(void 0, void 0, void 0, function* () {
+    const { page, limit, skip, sortBy, sortOrder } = paginationHelper_1.paginationHelper.calculatePagination(query);
+    const { status, searchTerm } = query, filterData = __rest(query, ["status", "searchTerm"]);
+    const andConditions = [{ guideId }];
+    if (status) {
+        andConditions.push({ status });
+    }
+    if (searchTerm) {
+        andConditions.push({
+            OR: tour_constant_1.tourSearchableFields.map((field) => ({
+                [field]: { contains: searchTerm, mode: "insensitive" },
+            })),
+        });
+    }
+    // Additional filters
+    if (Object.keys(filterData).length > 0) {
+        const filterConditions = Object.keys(filterData).map((key) => ({
+            [key]: { equals: filterData[key] },
+        }));
+        andConditions.push(...filterConditions);
+    }
+    const whereConditions = { AND: andConditions };
+    const [tours, total] = yield Promise.all([
+        prisma_1.prisma.tour.findMany({
+            where: whereConditions,
+            orderBy: sortBy ? { [sortBy]: sortOrder } : { createdAt: "desc" },
+            skip,
+            take: limit,
+        }),
+        prisma_1.prisma.tour.count({ where: whereConditions }),
+    ]);
+    return {
+        data: tours,
+        meta: { total, page, totalPage: Math.ceil(total / limit), limit },
+    };
+});
 exports.TourService = {
     createTour,
     updateTour,
     deleteTour,
     getAllTours,
     getTourById,
+    getGuideTours
 };

@@ -14,6 +14,7 @@ router.post("/", (0, checkAuth_1.checkAuth)(client_1.UserRole.GUIDE), multer_con
     return tour_controller_1.TourController.createTour(req, res, next);
 });
 router.get("/", tour_controller_1.TourController.getAllTours);
+router.get("/my-tours", (0, checkAuth_1.checkAuth)(client_1.UserRole.GUIDE), tour_controller_1.TourController.getGuideTours);
 router.get("/:id", tour_controller_1.TourController.getTourById);
 router.patch("/:id", (0, checkAuth_1.checkAuth)(client_1.UserRole.GUIDE), multer_config_1.multerUpload.array("files"), (0, validationRequest_1.validationRequest)(tour_validation_1.updateTourSchema), tour_controller_1.TourController.updateTour);
 router.delete("/:id", (0, checkAuth_1.checkAuth)(client_1.UserRole.GUIDE, client_1.UserRole.ADMIN), tour_controller_1.TourController.deleteTour);

@@ -19,10 +19,16 @@ router.post(
 );
 
 router.get("/", TourController.getAllTours);
+router.get(
+  "/my-tours",
+  checkAuth(UserRole.GUIDE),
+  TourController.getGuideTours
+);
 router.get("/:id", TourController.getTourById);
 
 router.patch("/:id", checkAuth(UserRole.GUIDE), multerUpload.array("files"), validationRequest(updateTourSchema), TourController.updateTour);
 
 router.delete("/:id", checkAuth(UserRole.GUIDE, UserRole.ADMIN), TourController.deleteTour);
+
 
 export const TourRouter = router;

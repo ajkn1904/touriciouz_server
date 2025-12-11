@@ -97,10 +97,29 @@ const getTourById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getGuideTours = catchAsync(async (req: Request, res: Response) => {
+  const decoded = req.user as JwtPayload;
+
+  const guide = await prisma.guide.findFirst({ where: { userId: decoded.userId } });
+  if (!guide) throw new AppError(StatusCodes.BAD_REQUEST, "Guide not found");
+
+  const result = await TourService.getGuideTours(guide.id, req.query as any);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Guide tours retrieved successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
+
 export const TourController = {
   createTour,
   updateTour,
   deleteTour,
   getAllTours,
   getTourById,
+  getGuideTours
 };
