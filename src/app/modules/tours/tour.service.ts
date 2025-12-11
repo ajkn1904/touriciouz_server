@@ -71,8 +71,7 @@ const deleteTour = async (tourId: string): Promise<Tour> => {
 
 const getAllTours = async (query: Record<string, any>) => {
   const { page, limit, skip, sortBy, sortOrder } = paginationHelper.calculatePagination(query);
-
-  const { searchTerm, ...filterData } = query;
+  const { searchTerm, page: _p, limit: _l, skip: _s, sortBy: _sb, sortOrder: _so, ...filterData } = query;
 
   const andConditions: any[] = [];
 
@@ -105,7 +104,7 @@ const getAllTours = async (query: Record<string, any>) => {
 
   return {
     data: tours,
-    meta: { total, page, totalPage:Math.ceil(total/limit), limit },
+    meta: { total, page, totalPage: Math.ceil(total / limit), limit },
   };
 };
 
@@ -119,13 +118,11 @@ const getTourById = async (id: string) => {
 
 const getGuideTours = async (guideId: string, query: Record<string, any>) => {
   const { page, limit, skip, sortBy, sortOrder } = paginationHelper.calculatePagination(query);
-  const { status, searchTerm, ...filterData } = query;
+  const { status, searchTerm, page: _p, limit: _l, skip: _s, sortBy: _sb, sortOrder: _so, ...filterData } = query;
 
   const andConditions: any[] = [{ guideId }];
 
-  if (status) {
-    andConditions.push({ status });
-  }
+  if (status) andConditions.push({ status });
 
   if (searchTerm) {
     andConditions.push({
@@ -135,7 +132,6 @@ const getGuideTours = async (guideId: string, query: Record<string, any>) => {
     });
   }
 
-  // Additional filters
   if (Object.keys(filterData).length > 0) {
     const filterConditions = Object.keys(filterData).map((key) => ({
       [key]: { equals: filterData[key] },
@@ -160,6 +156,7 @@ const getGuideTours = async (guideId: string, query: Record<string, any>) => {
     meta: { total, page, totalPage: Math.ceil(total / limit), limit },
   };
 };
+
 
 
 export const TourService = {

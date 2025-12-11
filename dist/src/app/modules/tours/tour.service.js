@@ -83,7 +83,7 @@ const deleteTour = (tourId) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const getAllTours = (query) => __awaiter(void 0, void 0, void 0, function* () {
     const { page, limit, skip, sortBy, sortOrder } = paginationHelper_1.paginationHelper.calculatePagination(query);
-    const { searchTerm } = query, filterData = __rest(query, ["searchTerm"]);
+    const { searchTerm, page: _p, limit: _l, skip: _s, sortBy: _sb, sortOrder: _so } = query, filterData = __rest(query, ["searchTerm", "page", "limit", "skip", "sortBy", "sortOrder"]);
     const andConditions = [];
     if (searchTerm) {
         andConditions.push({
@@ -121,11 +121,10 @@ const getTourById = (id) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const getGuideTours = (guideId, query) => __awaiter(void 0, void 0, void 0, function* () {
     const { page, limit, skip, sortBy, sortOrder } = paginationHelper_1.paginationHelper.calculatePagination(query);
-    const { status, searchTerm } = query, filterData = __rest(query, ["status", "searchTerm"]);
+    const { status, searchTerm, page: _p, limit: _l, skip: _s, sortBy: _sb, sortOrder: _so } = query, filterData = __rest(query, ["status", "searchTerm", "page", "limit", "skip", "sortBy", "sortOrder"]);
     const andConditions = [{ guideId }];
-    if (status) {
+    if (status)
         andConditions.push({ status });
-    }
     if (searchTerm) {
         andConditions.push({
             OR: tour_constant_1.tourSearchableFields.map((field) => ({
@@ -133,7 +132,6 @@ const getGuideTours = (guideId, query) => __awaiter(void 0, void 0, void 0, func
             })),
         });
     }
-    // Additional filters
     if (Object.keys(filterData).length > 0) {
         const filterConditions = Object.keys(filterData).map((key) => ({
             [key]: { equals: filterData[key] },
