@@ -26,7 +26,10 @@ router.get(
 );
 router.get("/:id", TourController.getTourById);
 
-router.patch("/:id", checkAuth(UserRole.GUIDE), multerUpload.array("files"), validationRequest(updateTourSchema), TourController.updateTour);
+router.patch("/:id", checkAuth(UserRole.GUIDE), multerUpload.array("files"), (req: Request, res: Response, next: NextFunction) => {
+    req.body = updateTourSchema.parse(JSON.parse(req.body.data));
+    return TourController.updateTour(req, res, next);
+});
 
 router.delete("/:id", checkAuth(UserRole.GUIDE, UserRole.ADMIN), TourController.deleteTour);
 
