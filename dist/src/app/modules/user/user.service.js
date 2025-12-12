@@ -133,6 +133,7 @@ const getMe = (userId) => __awaiter(void 0, void 0, void 0, function* () {
             id: true,
             name: true,
             email: true,
+            phone: true,
             profilePic: true,
             bio: true,
             languages: true,

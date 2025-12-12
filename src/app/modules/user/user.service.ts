@@ -137,6 +137,7 @@ const getMe = async (
         id: true;
         name: true;
         email: true;
+        phone: true;
         profilePic: true;
         bio: true;
         languages: true;
@@ -162,6 +163,7 @@ const getMe = async (
       id: true,
       name: true,
       email: true,
+      phone: true,
       profilePic: true,
       bio: true,
       languages: true,
