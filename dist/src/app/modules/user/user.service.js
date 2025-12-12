@@ -108,8 +108,9 @@ const getAllUsers = (query) => __awaiter(void 0, void 0, void 0, function* () {
         meta: { total, page, totalPage: Math.ceil(total / limit), limit },
     };
 });
+// user.service.ts - Should look like this:
 const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield prisma_1.prisma.user.findUnique({
+    const user = yield prisma_1.prisma.user.findUnique({
         where: { id },
         select: {
             id: true,
@@ -123,8 +124,53 @@ const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
             status: true,
             createdAt: true,
             updatedAt: true,
+            guide: {
+                select: {
+                    id: true,
+                    expertise: true,
+                    dailyRate: true,
+                    rating: true,
+                    totalTours: true,
+                },
+            },
         },
     });
+    return user;
+});
+const getGuideById = (guideId) => __awaiter(void 0, void 0, void 0, function* () {
+    const guide = yield prisma_1.prisma.guide.findUnique({
+        where: { id: guideId },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    phone: true,
+                    profilePic: true,
+                    bio: true,
+                    languages: true,
+                    role: true,
+                    status: true,
+                    createdAt: true,
+                    updatedAt: true,
+                },
+            },
+        },
+    });
+    if (!guide) {
+        return null;
+    }
+    return Object.assign(Object.assign({}, guide.user), { guide: {
+            id: guide.id,
+            expertise: guide.expertise,
+            dailyRate: guide.dailyRate,
+            rating: guide.rating,
+            totalTours: guide.totalTours,
+            balance: guide.balance,
+            createdAt: guide.createdAt,
+            updatedAt: guide.updatedAt,
+        } });
 });
 const getMe = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     return yield prisma_1.prisma.user.findUnique({
@@ -248,4 +294,5 @@ exports.UserService = {
     getMe,
     updateUserRoleOrStatus,
     updateMyProfile,
+    getGuideById
 };

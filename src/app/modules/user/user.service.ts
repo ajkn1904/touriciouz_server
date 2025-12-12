@@ -109,8 +109,9 @@ const getAllUsers = async (query: Record<string, any>) => {
 
 
 
-const getUserById = async (id: string): Promise<Omit<User, "password"> | null> => {
-  return await prisma.user.findUnique({
+// user.service.ts - Should look like this:
+const getUserById = async (id: string): Promise<any> => {
+  const user = await prisma.user.findUnique({
     where: { id },
     select: {
       id: true,
@@ -124,9 +125,63 @@ const getUserById = async (id: string): Promise<Omit<User, "password"> | null> =
       status: true,
       createdAt: true,
       updatedAt: true,
+      guide: {
+        select: {
+          id: true,
+          expertise: true,
+          dailyRate: true,
+          rating: true,
+          totalTours: true,
+        },
+      },
     },
   });
+
+  return user;
 };
+
+
+const getGuideById = async (guideId: string): Promise<any> => {
+  const guide = await prisma.guide.findUnique({
+    where: { id: guideId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          profilePic: true,
+          bio: true,
+          languages: true,
+          role: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
+  });
+
+  if (!guide) {
+    return null;
+  }
+
+  return {
+    ...guide.user,
+    guide: {
+      id: guide.id,
+      expertise: guide.expertise,
+      dailyRate: guide.dailyRate,
+      rating: guide.rating,
+      totalTours: guide.totalTours,
+      balance: guide.balance,
+      createdAt: guide.createdAt,
+      updatedAt: guide.updatedAt,
+    },
+  };
+};
+
 
 
 const getMe = async (
@@ -307,4 +362,5 @@ export const UserService = {
   getMe,
   updateUserRoleOrStatus,
   updateMyProfile,
+  getGuideById
 };

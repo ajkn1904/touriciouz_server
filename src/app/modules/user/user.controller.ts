@@ -124,6 +124,25 @@ const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+
+// Add this function to your user.controller.ts
+const getGuideById = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await UserService.getGuideById(id);
+
+  if (!result) {
+    throw new AppError(StatusCodes.NOT_FOUND, "Guide not found");
+  }
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Guide retrieved successfully",
+    data: result,
+  });
+});
+
+
 export const UserController = {
   createUser,
   getAllUsers,
@@ -131,4 +150,5 @@ export const UserController = {
   getMe,
   updateUserRoleOrStatus,
   updateMyProfile,
+  getGuideById
 };

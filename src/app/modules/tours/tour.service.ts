@@ -98,21 +98,75 @@ const getAllTours = async (query: Record<string, any>) => {
       orderBy: sortBy ? { [sortBy]: sortOrder } : { createdAt: "desc" },
       skip,
       take: limit,
+      include: {
+        guide: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              }
+            }
+          }
+        }
+      }
     }),
     prisma.tour.count({ where: whereConditions }),
   ]);
 
+  const transformedTours = tours.map(tour => ({
+    ...tour,
+    guide: tour.guide ? {
+      id: tour.guide.id,
+      name: tour.guide.user.name,
+      email: tour.guide.user.email,
+      expertise: tour.guide.expertise,
+      dailyRate: tour.guide.dailyRate,
+      rating: tour.guide.rating,
+    } : null
+  }));
+
   return {
-    data: tours,
+    data: transformedTours,
     meta: { total, page, totalPage: Math.ceil(total / limit), limit },
   };
 };
 
 
 const getTourById = async (id: string) => {
-  const tour = await prisma.tour.findUnique({ where: { id } });
+  const tour = await prisma.tour.findUnique({
+    where: { id },
+    include: {
+      guide: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            }
+          }
+        }
+      }
+    }
+  });
+  
   if (!tour) throw new AppError(StatusCodes.NOT_FOUND, "Tour not found");
-  return tour;
+  
+  const transformedTour = {
+    ...tour,
+    guide: tour.guide ? {
+      id: tour.guide.id,
+      name: tour.guide.user.name,
+      email: tour.guide.user.email,
+      expertise: tour.guide.expertise,
+      dailyRate: tour.guide.dailyRate,
+      rating: tour.guide.rating,
+    } : null
+  };
+  
+  return transformedTour;
 };
 
 

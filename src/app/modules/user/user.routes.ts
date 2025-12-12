@@ -11,6 +11,7 @@ const router = Router();
 router.post("/", validationRequest(createUserSchema), UserController.createUser);
 
 router.get("/", checkAuth(UserRole.ADMIN), UserController.getAllUsers);
+router.get("/guide/:id", UserController.getGuideById)
 router.get("/me", checkAuth(...Object.values(UserRole)), UserController.getMe);
 router.patch("/my-profile", checkAuth(...Object.values(UserRole)), multerUpload.single("file"), (req: Request, res: Response, next: NextFunction) => {
     req.body = updateUserSchema.parse(JSON.parse(req.body.data));

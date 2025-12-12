@@ -27,6 +27,7 @@ exports.UserController = void 0;
 const sendResponse_1 = __importDefault(require("../../utils/sendResponse"));
 const user_service_1 = require("./user.service");
 const http_status_codes_1 = require("http-status-codes");
+const AppError_1 = __importDefault(require("../../errors/AppError"));
 const catchAsync_1 = __importDefault(require("../../utils/catchAsync"));
 const pick_1 = __importDefault(require("../../helpers/pick"));
 const user_constant_1 = require("./user.constant");
@@ -119,6 +120,20 @@ const updateMyProfile = (0, catchAsync_1.default)((req, res) => __awaiter(void 0
         data: result,
     });
 }));
+// Add this function to your user.controller.ts
+const getGuideById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const result = yield user_service_1.UserService.getGuideById(id);
+    if (!result) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, "Guide not found");
+    }
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        success: true,
+        message: "Guide retrieved successfully",
+        data: result,
+    });
+}));
 exports.UserController = {
     createUser,
     getAllUsers,
@@ -126,4 +141,5 @@ exports.UserController = {
     getMe,
     updateUserRoleOrStatus,
     updateMyProfile,
+    getGuideById
 };

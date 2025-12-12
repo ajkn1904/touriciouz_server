@@ -105,19 +105,63 @@ const getAllTours = (query) => __awaiter(void 0, void 0, void 0, function* () {
             orderBy: sortBy ? { [sortBy]: sortOrder } : { createdAt: "desc" },
             skip,
             take: limit,
+            include: {
+                guide: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                            }
+                        }
+                    }
+                }
+            }
         }),
         prisma_1.prisma.tour.count({ where: whereConditions }),
     ]);
+    const transformedTours = tours.map(tour => (Object.assign(Object.assign({}, tour), { guide: tour.guide ? {
+            id: tour.guide.id,
+            name: tour.guide.user.name,
+            email: tour.guide.user.email,
+            expertise: tour.guide.expertise,
+            dailyRate: tour.guide.dailyRate,
+            rating: tour.guide.rating,
+        } : null })));
     return {
-        data: tours,
+        data: transformedTours,
         meta: { total, page, totalPage: Math.ceil(total / limit), limit },
     };
 });
 const getTourById = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    const tour = yield prisma_1.prisma.tour.findUnique({ where: { id } });
+    const tour = yield prisma_1.prisma.tour.findUnique({
+        where: { id },
+        include: {
+            guide: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                        }
+                    }
+                }
+            }
+        }
+    });
     if (!tour)
         throw new AppError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, "Tour not found");
-    return tour;
+    const transformedTour = Object.assign(Object.assign({}, tour), { guide: tour.guide ? {
+            id: tour.guide.id,
+            name: tour.guide.user.name,
+            email: tour.guide.user.email,
+            expertise: tour.guide.expertise,
+            dailyRate: tour.guide.dailyRate,
+            rating: tour.guide.rating,
+        } : null });
+    return transformedTour;
 });
 const getGuideTours = (guideId, query) => __awaiter(void 0, void 0, void 0, function* () {
     const { page, limit, skip, sortBy, sortOrder } = paginationHelper_1.paginationHelper.calculatePagination(query);
