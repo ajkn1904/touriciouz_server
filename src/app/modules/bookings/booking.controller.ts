@@ -79,10 +79,33 @@ const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const getGuideBookings = catchAsync(async (req: Request, res: Response) => {
+  const decodedToken = req.user as JwtPayload;
+
+  const options = pick(req.query, ["page", "limit", "sortBy", "sortOrder"]);
+  const filters = pick(req.query, bookingSearchableFields);
+
+  const bookings = await BookingService.getGuideBookings(
+    decodedToken.userId,
+    { ...filters, ...options }
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Guide bookings retrieved successfully",
+    data: bookings.data,
+    meta: bookings.meta,
+  });
+});
+
+
 export const BookingController = {
   createBooking,
   getUserBookings,
   getBookingById,
   getAllBookings,
   updateBookingStatus,
+  getGuideBookings
 };

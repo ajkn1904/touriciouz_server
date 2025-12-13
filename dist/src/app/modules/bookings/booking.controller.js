@@ -76,10 +76,24 @@ const updateBookingStatus = (0, catchAsync_1.default)((req, res) => __awaiter(vo
         data: updated,
     });
 }));
+const getGuideBookings = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const decodedToken = req.user;
+    const options = (0, pick_1.default)(req.query, ["page", "limit", "sortBy", "sortOrder"]);
+    const filters = (0, pick_1.default)(req.query, booking_constant_1.bookingSearchableFields);
+    const bookings = yield booking_service_1.BookingService.getGuideBookings(decodedToken.userId, Object.assign(Object.assign({}, filters), options));
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Guide bookings retrieved successfully",
+        data: bookings.data,
+        meta: bookings.meta,
+    });
+}));
 exports.BookingController = {
     createBooking,
     getUserBookings,
     getBookingById,
     getAllBookings,
     updateBookingStatus,
+    getGuideBookings
 };

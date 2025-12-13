@@ -361,10 +361,111 @@ if (status === BookingStatus.CANCELLED && booking.payment) {
 };
 
 
+const getGuideBookings = async (guideId: string, query: Record<string, any>) => {
+  const guide = await prisma.guide.findUnique({
+    where: { userId: guideId }, // Note: guideId is actually userId
+  });
+
+  if (!guide) {
+    throw new AppError(StatusCodes.NOT_FOUND, "Guide profile not found");
+  }
+
+  const { page, limit, skip, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(query);
+
+  const { searchTerm, status, sortBy: _sb, sortOrder: _so, ...filters } = query;
+
+  const where: any = {
+    guideId: guide.id, // Filter by guide's ID
+  };
+
+  if (searchTerm) {
+    where.OR = [
+      { status: { contains: searchTerm, mode: "insensitive" } },
+      { tour: { title: { contains: searchTerm, mode: "insensitive" } } },
+      { tourist: { user: { name: { contains: searchTerm, mode: "insensitive" } } } },
+    ];
+  }
+
+  if (status) {
+    where.status = status;
+  }
+
+  const [bookings, total] = await Promise.all([
+    prisma.booking.findMany({
+      where,
+      include: {
+        tour: {
+          select: {
+            id: true,
+            title: true,
+            category: true,
+            packagePrice: true,
+            guideFee: true,
+            durationDays: true,
+            physicality: true,
+            location: true,
+            meetingPoint: true,
+            maxGroupSize: true,
+            ageLimit: true,
+            departure: true,
+            departureTime: true,
+            rating: true,
+          },
+        },
+        payment: {
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            transactionId: true,
+          },
+        },
+        guide: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                languages: true,
+              },
+            },
+          },
+        },
+        tourist: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                languages: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: sortBy ? { [sortBy]: sortOrder } : { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+    prisma.booking.count({ where }),
+  ]);
+
+  return {
+    data: bookings,
+    meta: { total, page, totalPage: Math.ceil(total / limit), limit },
+  };
+};
+
 export const BookingService = {
   createBooking,
   getUserBookings,
   getBookingById,
   getAllBookings,
   updateBookingStatus,
+  getGuideBookings
 };
