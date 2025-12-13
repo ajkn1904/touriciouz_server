@@ -18,6 +18,6 @@ router.patch("/my-profile", checkAuth(...Object.values(UserRole)), multerUpload.
     return UserController.updateMyProfile(req, res, next);
 }),
 router.patch("/user-update/:id", checkAuth(UserRole.ADMIN), validationRequest(updateUserSchema), UserController.updateUserRoleOrStatus);
-router.get("/:id", checkAuth(UserRole.ADMIN), UserController.getUserById);
+router.get("/:id", UserController.getUserById);
 
 export const UserRouter = router;

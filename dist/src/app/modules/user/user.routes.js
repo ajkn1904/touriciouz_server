@@ -18,5 +18,5 @@ router.patch("/my-profile", (0, checkAuth_1.checkAuth)(...Object.values(client_1
     return user_controller_1.UserController.updateMyProfile(req, res, next);
 }),
     router.patch("/user-update/:id", (0, checkAuth_1.checkAuth)(client_1.UserRole.ADMIN), (0, validationRequest_1.validationRequest)(user_validation_1.updateUserSchema), user_controller_1.UserController.updateUserRoleOrStatus);
-router.get("/:id", (0, checkAuth_1.checkAuth)(client_1.UserRole.ADMIN), user_controller_1.UserController.getUserById);
+router.get("/:id", user_controller_1.UserController.getUserById);
 exports.UserRouter = router;
